@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags="-s -w" -a -o gate gate.go
 
 # Move binary into final image
-FROM --platform=$BUILDPLATFORM gcr.io/distroless/static-debian11 AS app
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25.0.1_8-jre-alpine AS app
 COPY --from=build /workspace/gate /
 #COPY config.yml /
 CMD ["/gate"]
