@@ -17,13 +17,13 @@ var Plugin = proxy.Plugin{
 		log := logr.FromContextOrDiscard(ctx)
 		log.Info("Hello from TabList plugin!")
 
-		event.Subscribe(p.Event(), 0, onPing(log))
+		event.Subscribe(p.Event(), 0, onConnect(log))
 
 		return nil
 	},
 }
 
-func onPing(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
+func onConnect(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
 	return func(e *proxy.ServerPostConnectEvent) {
 		server := e.Player().CurrentServer().Server()
 		serverName := server.ServerInfo().Name()
