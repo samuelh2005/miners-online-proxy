@@ -3,19 +3,49 @@ services:
     build:
       context: ..
       dockerfile: ./Dockerfile
-    env_file:
-      - gate.env
     restart: unless-stopped
     volumes:
       - ./gate/config.yml:/config.yml
-      - ./gate/:/run/
+      - ./gate/:/var/gate/
     ports:
       - '25565:25565' # Java Edition
       - '25565:25565/udp' # Java Edition query
       - '19132:19132/udp' # Geyser listener
       - '8080:8080' # API
+    secrets:
+      - velocity_forwarding_secret
+    networks:
+      - minecraft
+
+  lobby-1:
+    image: itzg/minecraft-server:latest
+    restart: unless-stopped
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "1.21.11"
+      ONLINE_MODE: "FALSE"
+
+      REPLACE_ENV_IN_PLACE: "true"
+      REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
+
+      CFG_VELOCITY_ENABLED: "true"
+      CFG_VELOCITY_ONLINE_MODE: "true"
+      CFG_PROXY_SECRET_FILE: "/run/secrets/velocity_forwarding_secret"
+
+      PATCH_DEFINITIONS: "/patches"
+    depends_on:
+      - gate
+    volumes:
+      - ./paper-patches:/patches
+    secrets:
+      - velocity_forwarding_secret
     networks:
       - minecraft
 
 networks:
   minecraft:
+
+secrets:
+  velocity_forwarding_secret:
+    file: ./velocity_forwarding_secret.txt

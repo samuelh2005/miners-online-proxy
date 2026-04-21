@@ -7,7 +7,7 @@ config:
   bedrock:
     managed: true
     geyserListenAddress: 0.0.0.0:19132
-    floodgateKeyPath: /run/floodgate.pem
+    floodgateKeyPath: /var/gate/floodgate.pem
   query:
     enabled: true
     port: 25565

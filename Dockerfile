@@ -22,5 +22,8 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
 # Move binary into final image
 FROM --platform=$BUILDPLATFORM eclipse-temurin:25.0.1_8-jre-alpine AS app
 COPY --from=build /workspace/gate /
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
 #COPY config.yml /
-CMD ["/gate"]
+ENTRYPOINT ["/entrypoint.sh"]
