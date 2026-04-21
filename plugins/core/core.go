@@ -116,9 +116,11 @@ func onConnect(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
 				links = append(links, link)
 			}
 
-			player.WritePacket(&packet.ServerLinks{
+			if err := player.WritePacket(&packet.ServerLinks{
 				ServerLinks: links,
-			})
+			}); err != nil {
+				log.Error(err, "failed to write server links")
+			}
 		}
 	}
 }
