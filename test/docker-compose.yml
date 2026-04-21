@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./gate/config.yml:/config.yml
+      - ./gate/branding.yml:/branding.yml
       - ./gate/:/var/gate/
     ports:
       - '25565:25565' # Java Edition
