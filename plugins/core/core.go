@@ -10,6 +10,8 @@ import (
 	"github.com/robinbraemer/event"
 	"github.com/spf13/viper"
 	c "go.minekube.com/common/minecraft/component"
+	"go.minekube.com/gate/pkg/edition/java/proto/packet"
+	"go.minekube.com/gate/pkg/edition/java/proto/packet/chat"
 	"go.minekube.com/gate/pkg/edition/java/proxy"
 	"go.minekube.com/gate/pkg/util/favicon"
 )
@@ -48,24 +50,75 @@ var Plugin = proxy.Plugin{
 
 func onConnect(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
 	return func(e *proxy.ServerPostConnectEvent) {
-		server := e.Player().CurrentServer().Server()
+		player := e.Player()
+
+		server := player.CurrentServer().Server()
 		serverName := server.ServerInfo().Name()
 		playerCount := server.Players().Len()
 
-		out := config.GetString("tablist.header")
-		out = replace(out, "{server}", serverName)
-		out = replace(out, "{players}", strconv.Itoa(playerCount))
+		// -------------------------
+		// Tablist header/footer
+		// -------------------------
+		headerRaw := config.GetString("tablist.header")
+		headerRaw = replace(headerRaw, "{server}", serverName)
+		headerRaw = replace(headerRaw, "{players}", strconv.Itoa(playerCount))
 
-		header := &c.Text{
-			Content: out,
-		}
-		footer := &c.Text{
-			Content: config.GetString("tablist.footer"),
+		header := &c.Text{Content: headerRaw}
+		footer := &c.Text{Content: config.GetString("tablist.footer")}
+
+		if err := player.TabList().SetHeaderFooter(header, footer); err != nil {
+			log.Error(err, "failed to set tab list header/footer")
 		}
 
-		setError := e.Player().TabList().SetHeaderFooter(header, footer)
-		if setError != nil {
-			log.Error(setError, "Failed to set tab list header/footer")
+		// -------------------------
+		// Server links
+		// -------------------------
+		type ServerLinkConfig struct {
+			Label any    `mapstructure:"label"`
+			URL   string `mapstructure:"url"`
+		}
+
+		var linksConfig []ServerLinkConfig
+
+		if err := config.UnmarshalKey("serverLinks", &linksConfig); err != nil {
+			log.Error(err, "failed to read serverLinks config")
+			linksConfig = nil
+		}
+
+		if len(linksConfig) > 0 {
+			links := make([]*packet.ServerLink, 0, len(linksConfig))
+
+			for _, l := range linksConfig {
+				if l.URL == "" {
+					continue
+				}
+
+				link := &packet.ServerLink{
+					ID:  -1, // server links enum type, 0 to 9. -1 for custom links without an ID (-1 gets ignored and the component is encoded instead).
+					URL: l.URL,
+				}
+
+				switch v := l.Label.(type) {
+				case int:
+					link.ID = v
+				case int64:
+					link.ID = int(v)
+				case float64:
+					link.ID = int(v)
+				case string:
+					if n, err := strconv.Atoi(v); err == nil {
+						link.ID = n
+					} else {
+						link.DisplayName = *chat.FromComponent(&c.Text{Content: v})
+					}
+				}
+
+				links = append(links, link)
+			}
+
+			player.WritePacket(&packet.ServerLinks{
+				ServerLinks: links,
+			})
 		}
 	}
 }
