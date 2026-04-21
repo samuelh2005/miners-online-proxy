@@ -17,13 +17,13 @@ var Plugin = proxy.Plugin{
 		log := logr.FromContextOrDiscard(ctx)
 		log.Info("Hello from TabList plugin!")
 
-		event.Subscribe(p.Event(), 0, onPing())
+		event.Subscribe(p.Event(), 0, onPing(log))
 
 		return nil
 	},
 }
 
-func onPing() func(*proxy.ServerPostConnectEvent) {
+func onPing(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
 	return func(e *proxy.ServerPostConnectEvent) {
 		server := e.Player().CurrentServer().Server()
 		serverName := server.ServerInfo().Name()
@@ -36,6 +36,9 @@ func onPing() func(*proxy.ServerPostConnectEvent) {
 			Content: "§eWebsite: §bwww.minersonline.uk §7| §eDiscord: §bdiscord.gg/aeRReEaNnm",
 		}
 
-		e.Player().TabList().SetHeaderFooter(header, footer)
+		setError := e.Player().TabList().SetHeaderFooter(header, footer)
+		if setError != nil {
+			log.Error(setError, "Failed to set tab list header/footer")
+		}
 	}
 }
