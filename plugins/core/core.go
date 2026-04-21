@@ -1,7 +1,8 @@
-package ping
+package core
 
 import (
 	"context"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/go-logr/logr"
@@ -22,15 +23,36 @@ var (
 
 // Plugin is a ping plugin that handles ping events.
 var Plugin = proxy.Plugin{
-	Name: "Ping",
+	Name: "Core",
 	Init: func(ctx context.Context, p *proxy.Proxy) error {
 		log := logr.FromContextOrDiscard(ctx)
-		log.Info("Hello from Ping plugin!")
+		log.Info("Hello from Core plugin!")
 
+		event.Subscribe(p.Event(), 0, onConnect(log))
 		event.Subscribe(p.Event(), 0, onPing())
 
 		return nil
 	},
+}
+
+func onConnect(log logr.Logger) func(*proxy.ServerPostConnectEvent) {
+	return func(e *proxy.ServerPostConnectEvent) {
+		server := e.Player().CurrentServer().Server()
+		serverName := server.ServerInfo().Name()
+		playerCount := server.Players().Len()
+
+		header := &c.Text{
+			Content: "§e⛏ §9lMiners Online §r§e⛏\n§7You are playing on §a" + serverName + " §7with §a" + strconv.Itoa(playerCount) + " §7players online!",
+		}
+		footer := &c.Text{
+			Content: "§eWebsite: §bwww.minersonline.uk §7| §eDiscord: §bdiscord.gg/aeRReEaNnm",
+		}
+
+		setError := e.Player().TabList().SetHeaderFooter(header, footer)
+		if setError != nil {
+			log.Error(setError, "Failed to set tab list header/footer")
+		}
+	}
 }
 
 func onPing() func(*proxy.PingEvent) {
