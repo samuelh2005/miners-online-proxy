@@ -2,6 +2,7 @@ package tablist
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/robinbraemer/event"
@@ -22,14 +23,17 @@ var Plugin = proxy.Plugin{
 	},
 }
 
-func onPing() func(*proxy.PostLoginEvent) {
-	return func(e *proxy.PostLoginEvent) {
+func onPing() func(*proxy.ServerPostConnectEvent) {
+	return func(e *proxy.ServerPostConnectEvent) {
+		server := e.Player().CurrentServer().Server()
+		serverName := server.ServerInfo().Name()
+		playerCount := server.Players().Len()
 
 		header := &c.Text{
-			Content: "Header",
+			Content: "§e⛏ §9lMiners Online §r§e⛏\n§7You are playing on §a" + serverName + " §7with §a" + strconv.Itoa(playerCount) + " §7players online!",
 		}
 		footer := &c.Text{
-			Content: "Footer",
+			Content: "§eWebsite: §bwww.minersonline.uk §7| §eDiscord: §bdiscord.gg/aeRReEaNnm",
 		}
 
 		e.Player().TabList().SetHeaderFooter(header, footer)

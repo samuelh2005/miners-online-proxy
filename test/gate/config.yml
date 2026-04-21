@@ -13,13 +13,8 @@ config:
     port: 25565
   servers:
     lobby-1: lobby-1:25565
-    survival: desktop-0uc53li.netbird.cloud:35565
-    modded-creative: desktop-0uc53li.netbird.cloud:35566
   try:
     - lobby-1
-  forcedHosts:
-    "surival.mc.minersonline.uk": ["survival"]
-    "modded-creative.mc.minersonline.uk": ["modded-creative"]
 api:
   enabled: true
   bind: 0.0.0.0:8080
